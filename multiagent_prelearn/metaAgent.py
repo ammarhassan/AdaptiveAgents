@@ -12,18 +12,20 @@ class metaAgent():
 
 
 	def agentsMove(self, iteration):
+		# determining the best move
 		allMoves = [pa.expectedReturn() for pa in self.proxyAgents]
-		
 		bestAgent = max(enumerate(allMoves), key = itemgetter(1))[0]
 		nextMove = self.proxyAgents[bestAgent].agentsMove()
-		nextMoves = [pa.agentsMove() for pa in self.proxyAgents]
-		# nextMove = random.choice(['C', 'D'])
-		print nextMove, self.proxyAgents[0].currentState, zip(nextMoves, [int(x) for x in allMoves])
+
+		stateValues = [pa.currentBestValue() for pa in self.proxyAgents]
+		predictedOpponents = [pa.predictedOpponentsMove() for pa in self.proxyAgents]
+		print nextMove, self.proxyAgents[0].currentState, zip(predictedOpponents, [int(x) for x in stateValues])
+
 		return nextMove
 
 
 	def updateAgent(self, agentsMove, opponentsMove):
-		evidence = [1 if pa.predictedOpponentsMove()==opponentsMove else 0 for pa in self.proxyAgents]
+		evidence = [1 if opponentsMove in pa.predictedOpponentsMove() else 0 for pa in self.proxyAgents]
 		
 		for pa, ev in zip(self.proxyAgents, evidence):
 			if ev == 0:
@@ -31,7 +33,7 @@ class metaAgent():
 
 			pa.updateCurrentState(agentsMove, opponentsMove)
 			pa.updateRewardSequence(self.payoffMatrix[agentsMove+opponentsMove])
-
+		print [pa.probability for pa in self.proxyAgents]
 		# print agentsMove + '-' + opponentsMove
 
 	def printRewards(self):
@@ -53,10 +55,33 @@ class proxyAgent():
 		self.suggestedMoves = []
 		self.probability = probability
 
+	def isFound(self):
+		remaining = sum([ax.probability>0 for ax in self.agents])
+		if remaining ==1:
+			return 'Found'
+		elif remaining ==0:
+			return 'Unknown'
+		else:
+			return 'Searching'
+
+	def isValid(self):
+		# check for immature state
+		if self.currentState not in self.qtable:
+			return False
+
+		# check for if this agent is 
+		elif sum(self.qtable[self.currentState].values()) == 0:
+			return False
+		else:
+			return True
+
 	def agentsMove(self):
-		move = max(self.qtable[self.currentState].items(), key = itemgetter(1))[0][0]
-		self.suggestedMoves.append(move)
-		return move
+		if not self.isValid():
+			return random.choice(['C', 'D'])
+		else:
+			move = max(self.qtable[self.currentState].items(), key = itemgetter(1))[0][0]
+			self.suggestedMoves.append(move)
+			return move
 
 	def updateRewardSequence(self, reward):
 		self.rewardSequence.append(reward)
@@ -74,10 +99,22 @@ class proxyAgent():
 		
 	
 	def expectedReturn(self):
-		return max(self.qtable[self.currentState].values()) * self.probability
+		if self.isValid():
+			return max(self.qtable[self.currentState].values()) * self.probability
+		else:
+			return 0
+
+	def currentBestValue(self):
+		if self.isValid():
+			return max(self.qtable[self.currentState].values())
+		else:
+			return 0
 
 	def predictedOpponentsMove(self):
-		return max(self.qtable[self.currentState].items(), key = itemgetter(1))[0][1]
+		if self.isValid():
+			return [max(self.qtable[self.currentState].items(), key = itemgetter(1))[0][1]]
+		else:
+			return ['C', 'D']
 
 	def setProbability(self, p):
 		self.probability = p

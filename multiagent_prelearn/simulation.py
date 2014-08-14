@@ -14,13 +14,13 @@ class generation():
 	def __init__(self, iterations, strategiesList, agentTypes):
 
 		self.payoffMatrix = {"DD":1, "CC":3, "CD":0, "DC":5}
-		self.agents = [self.createAgent(x) for x in agentTypes]
+		self.agents = [self.createAgent(ax, sl) for ax, sl in zip(agentTypes, strategiesList)]
 		self.opponents = [strategy(x) for x in strategiesList]
 		self.iterations = iterations
 		self.learntPolicies = []
 		
 
-	def createAgent(self, agentType):
+	def createAgent(self, agentType, strategy = 'TFT'):
 		if agentType == 'Learner':
 			iterations_exploring = 1000
 			T = pow(.01, 1.0/iterations_exploring)
@@ -29,6 +29,7 @@ class generation():
 			numHistoryMoves = random.choice([1,2,3])
 			numHistoryMoves = 1
 			agentx = agent(numHistoryMoves, alpha, gamma, T, self.payoffMatrix)
+			agentx.sneakStrategy = strategy
 		elif agentType == 'Meta':
 			agentx = metaAgent(self.learntPolicies, self.payoffMatrix)
 		
@@ -95,37 +96,22 @@ def runOneToOne():
 
 
 def main():
-	# PSEUDO-CODE
 	populationSize = 100
 	# strategiesList = [random.choice(strategyTypes.keys()) for x in range(populationSize)]
 	strategiesList = strategyTypes.keys()
-	agentTypesList = ['Learner' for i in range(9)]
+	agentTypesList = ['Learner' for i in range(len(strategiesList))]
 	g = generation(10000, strategiesList, agentTypesList)
 	g.runGeneration()
+	for ax in g.agents:
+		ax.interpretResults()
 	g.addLearntPolicies()
-	
-	strategiesList = ['TFTT']
+	print strategyTypes.keys()
+	strategiesList = ['Switch']
 	agentTypesList = ['Meta']
-	print len(g.learntPolicies)
 	g.nextGeneration(20, strategiesList, agentTypesList)
 	g.runGeneration()
 
-	# # g.afterSimulationAnalysis()
-	# for ma in g.agents:
-	# 	for pa in ma.proxyAgents:
-	# 		print pa.rewardSequence, pa.suggestedMoves
-	# 		# plt.plot(pa.rewardSequence)
-	# # plt.show()
-
-	# next generation of only meta-agents
-
-
-
-	
-
-
-
 
 if __name__ == '__main__':
-	# main()
-	runOneToOne()
+	main()
+	# runOneToOne()

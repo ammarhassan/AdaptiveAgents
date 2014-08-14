@@ -15,6 +15,8 @@ class agent():
 		self.alpha = alpha
 		self.T = T
 
+		self.sneakStrategy = ''
+
 		self.numStates = 0
 		self.states = {} # a two way hash map or reverse map<->
 		self.initializeStates()
@@ -35,8 +37,10 @@ class agent():
 	def packQTable(self):
 		genericQTable = {}
 		for i in range(self.numStates):
+			# add only mature states
 			state = self.states[str(i)]
-			genericQTable[state] = copy.deepcopy(self.qtable[str(i)])
+			if len(state) == self.numHistoryMoves * 2 + 1:
+				genericQTable[state] = copy.deepcopy(self.qtable[str(i)])
 		return genericQTable
 
 	def initializeStates(self):
@@ -132,6 +136,7 @@ class agent():
 		return nextMove[0]
 
 	def interpretResults(self):
+		print self.sneakStrategy
 		for i in range(self.numStates):
 			if sum(self.qtable[str(i)].values()) > -10:
 				print self.states[str(i)], 

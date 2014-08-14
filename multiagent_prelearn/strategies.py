@@ -11,6 +11,7 @@ strategyTypes = {
 			 "ALLD" : 7,
 			 "GRIM" : 8,
 			 "PAVLOV" :9,
+			 "Switch":10,
 		}
 
 class strategy():
@@ -81,6 +82,8 @@ class strategy():
 					play = "D"
 			elif self.responseHistory[-1] == "C":
 				play = self.playedHistory[-1]
+		elif self.typ == "Switch":
+			play = ['C', 'D'][len(self.responseHistory)%2]
 
 		self.playedHistory.append(play)
 		return play
